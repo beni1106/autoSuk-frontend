@@ -7,11 +7,11 @@ const nextConfig = {
                 headers: [
                     {
                         key: "X-Frame-Options",
-                        value: "ALLOWALL", // biar bisa di-iframe dari mana saja
+                        value: "ALLOW-FROM https://domain-cpanelmu.com",
                     },
                     {
                         key: "Content-Security-Policy",
-                        value: "frame-ancestors *", // boleh semua domain
+                        value: "frame-ancestors 'self' https://domain-cpanelmu.com",
                     },
                 ],
             },
