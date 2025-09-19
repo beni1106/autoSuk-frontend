@@ -15,7 +15,6 @@ export default function PageDaftar() {
     });
     const [loading, setLoading] = useState(false);
 
-    // Ambil domain dari cookie
     useEffect(() => {
         const savedDomain = Cookies.get("domain");
         if (savedDomain) {
