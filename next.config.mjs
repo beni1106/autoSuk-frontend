@@ -7,11 +7,11 @@ const nextConfig = {
                 headers: [
                     {
                         key: "X-Frame-Options",
-                        value: "ALLOW-FROM https://domain-cpanelmu.com",
+                        value: "ALLOW-FROM https://basspreneur.com",
                     },
                     {
                         key: "Content-Security-Policy",
-                        value: "frame-ancestors 'self' https://domain-cpanelmu.com",
+                        value: "frame-ancestors 'self' https://basspreneur.com",
                     },
                 ],
             },
