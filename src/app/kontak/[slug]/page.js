@@ -1,36 +1,47 @@
-"use client"
+"use client";
 
-import { use } from "react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
+import Cookies from "js-cookie";
 
-export default function KontakSlugPage({ params }) {
-    const { slug } = use(params);
+export default function KontakPage() {
+    const [domain, setDomain] = useState(null);
     const [data, setData] = useState(null);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!slug) return;
+        const savedDomain = Cookies.get("domain");
+        if (!savedDomain) {
+            setError("Domain tidak ditemukan. Silakan akses lewat link domain Anda.");
+            return;
+        }
+
+        setDomain(savedDomain);
 
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/websupport?domain=${slug}`);
+                const res = await fetch(`/api/websupport?domain=${savedDomain}`);
                 const result = await res.json();
 
-                if (result.error) setError(result.error);
-                else if (Array.isArray(result) && result.length > 0) setData(result[0]);
+                if (result.error) {
+                    setError(result.error);
+                } else if (Array.isArray(result) && result.length > 0) {
+                    setData(result[0]);
+                } else {
+                    setError("Data tidak ditemukan.");
+                }
             } catch (err) {
                 setError("Terjadi error saat mengambil data.");
             }
         };
 
         fetchData();
-    }, [slug]);
+    }, []);
 
     return (
-        <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 pt-35 bg-emerald-400">
+        <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
             {data && (
                 <Script
                     id="ld-json-kontak"
