@@ -67,7 +67,7 @@ export default function PageDaftar() {
         <div className="flex items-center justify-center min-h-screen bg-emerald-400 pt-20">
             <div className="w-full max-w-lg bg-white shadow-md rounded-xl p-8">
                 <h1 className="text-2xl font-bold text-gray-800 text-center mb-6">
-                    Form Pendaftaran ({domain})
+                    Form Pendaftaran
                 </h1>
 
                 <form className="space-y-4" onSubmit={handleSubmit}>
