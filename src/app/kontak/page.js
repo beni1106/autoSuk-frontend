@@ -8,25 +8,39 @@ import Cookies from "js-cookie";
 
 export default function KontakSection() {
     const [data, setData] = useState(null);
-    const [error, setError] = useState(null);
 
     useEffect(() => {
         const domain = Cookies.get("domain");
-        if (!domain) {
-            setError("Domain tidak ditemukan. Silakan akses melalui link domain Anda.");
-            return;
-        }
 
         const fetchData = async () => {
             try {
+                if (!domain) {
+                    // fallback default
+                    setData({
+                        name: "Hamsul Hasan",
+                        whatsapp: "6281911846119",
+                    });
+                    return;
+                }
+
                 const res = await fetch(`/api/websupport?domain=${domain}`);
                 const result = await res.json();
 
-                if (result.error) setError(result.error);
-                else if (Array.isArray(result) && result.length > 0) setData(result[0]);
-                else setError("Data kontak tidak tersedia.");
+                if (result.error || !Array.isArray(result) || result.length === 0) {
+                    // fallback default
+                    setData({
+                        name: "Hamsul Hasan",
+                        whatsapp: "6281911846119",
+                    });
+                } else {
+                    setData(result[0]);
+                }
             } catch (err) {
-                setError("Gagal mengambil data kontak.");
+                // fallback default
+                setData({
+                    name: "Hamsul Hasan",
+                    whatsapp: "6281911846119",
+                });
             }
         };
 
@@ -80,9 +94,7 @@ export default function KontakSection() {
                     Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.
                 </p>
 
-                {error ? (
-                    <p className="text-red-400 mb-4">{error}</p>
-                ) : data ? (
+                {data ? (
                     <>
                         {/* Avatar Kontak */}
                         <div className="flex flex-col items-center mb-6">

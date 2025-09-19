@@ -15,7 +15,7 @@ export async function GET(req) {
         const nama = searchParams.get("nama");
         const email = searchParams.get("email");
         const kota = searchParams.get("kota");
-        const telp = normalizeIDPhone(searchParams.get("telp")); // pakai telp
+        const telp = normalizeIDPhone(searchParams.get("telp"));
         const username = searchParams.get("username");
         const password = searchParams.get("password");
         const domain = searchParams.get("domain");
@@ -24,11 +24,13 @@ export async function GET(req) {
         if (!domain || !token) {
             return NextResponse.json(
                 { error: "Domain atau token tidak ditemukan" },
-                { status: 400 }
+                {
+                    status: 400,
+                    headers: { "Access-Control-Allow-Origin": "*" },
+                }
             );
         }
 
-        // pakai field standar "telp"
         const params = new URLSearchParams({
             domain,
             token,
@@ -47,7 +49,17 @@ export async function GET(req) {
         console.log("📤 Data dikirim:", Object.fromEntries(params));
         console.log("🌐 Fetching:", url);
 
-        const res = await fetch(url, { method: "GET" });
+        // Tambahkan timeout supaya gak nunggu terlalu lama
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10 detik
+
+        const res = await fetch(url, {
+            method: "GET",
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeout);
+
         console.log("📡 Status Response:", res.status, res.statusText);
 
         const text = await res.text();
@@ -55,12 +67,38 @@ export async function GET(req) {
 
         try {
             const json = JSON.parse(text);
-            return NextResponse.json(json, { status: 200 });
+            return NextResponse.json(json, {
+                status: 200,
+                headers: { "Access-Control-Allow-Origin": "*" },
+            });
         } catch {
-            return new Response(text, { status: 200 });
+            return new Response(text, {
+                status: 200,
+                headers: { "Access-Control-Allow-Origin": "*" },
+            });
         }
     } catch (error) {
         console.error("❌ Error:", error.message);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json(
+            { error: error.message },
+            {
+                status: 500,
+                headers: { "Access-Control-Allow-Origin": "*" },
+            }
+        );
     }
+}
+
+// handle preflight request (CORS)
+export async function OPTIONS() {
+    return NextResponse.json(
+        {},
+        {
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            },
+        }
+    );
 }
