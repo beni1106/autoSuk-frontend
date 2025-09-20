@@ -17,7 +17,7 @@ export default function KontakSection() {
         // 2️⃣ Fallback ke cookie
         const cookieDomain = Cookies.get("domain");
 
-        // 3️⃣ Fallback default domain
+        // 3️⃣ Fallback default
         const finalDomain = queryDomain || cookieDomain || "default";
 
         const fetchData = async () => {
@@ -25,16 +25,14 @@ export default function KontakSection() {
                 const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                // Fallback default jika API error atau tidak mengembalikan data
+                // Fallback default kalau API error
                 let finalData = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
-
                 if (!result.error && result.name && result.whatsapp) {
-                    finalData = { ...result };
+                    finalData = result;
                 }
 
                 setData(finalData);
             } catch {
-                // fallback jika fetch gagal
                 setData({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
             }
         };
@@ -46,7 +44,7 @@ export default function KontakSection() {
 
     return (
         <section className="min-h-screen flex flex-col items-center justify-center bg-emerald-400 text-center px-6 py-20">
-            {/* JSON-LD */}
+            {/* JSON-LD SEO */}
             <Script
                 id="ld-json-kontak"
                 type="application/ld+json"

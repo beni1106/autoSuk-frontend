@@ -25,15 +25,6 @@ const nextConfig = {
       },
     ];
   },
-  async redirects() {
-    return [
-      {
-        source: '/:slug',           // contoh: /cahyo
-        destination: '/kontak/:slug', // redirect ke /kontak/cahyo
-        permanent: false,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
