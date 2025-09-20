@@ -10,45 +10,40 @@ export default function KontakSection() {
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        // Ambil query param dari URL (iframe PHP akan mengirim domain & nama_orang)
+        // 1️⃣ Ambil query param dari URL iframe
         const params = new URLSearchParams(window.location.search);
-        const namaOrang = params.get("nama_orang");
         const queryDomain = params.get("domain");
+        const namaOrang = params.get("nama_orang");
 
-        // Ambil dari cookie jika query param tidak ada
-        const cookieDomain = Cookies.get("domain");
-
-        // Final domain
-        const domain = queryDomain || cookieDomain || "defaultDomain.com";
+        // 2️⃣ Tentukan domain final: query param > cookie > default
+        const finalDomain = queryDomain || Cookies.get("domain") || "defaultDomain.com";
 
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/websupport?domain=${domain}`);
+                const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                // fallback default
                 let finalData = {
                     name: "Hamsul Hasan",
                     whatsapp: "6281911846119",
                 };
 
+                // Pakai data API jika tersedia
                 if (!result.error && Array.isArray(result) && result.length > 0) {
                     finalData = { ...result[0] };
                 }
 
-                // Override nama dari query param jika ada
+                // Override nama jika query param ada
                 if (namaOrang) finalData.name = namaOrang;
 
-                // Override nomor untuk domain tertentu
-                if (domain.toLowerCase() === "cahyo") {
+                // Contoh override nomor untuk domain tertentu
+                if (finalDomain.toLowerCase() === "cahyo") {
                     finalData.whatsapp = "628123456789"; // nomor Cahyo
                 }
 
-                // Simpan domain ke cookie agar bisa dipakai lain waktu
-                Cookies.set("domain", domain, { expires: 7 }); // cookie 7 hari
-
                 setData(finalData);
             } catch {
+                // fallback default jika fetch gagal
                 setData({
                     name: "Hamsul Hasan",
                     whatsapp: "6281911846119",
@@ -61,7 +56,7 @@ export default function KontakSection() {
 
     return (
         <section
-            className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 pt-35 bg-emerald-400"
+            className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400"
             id="kontak"
         >
             {data && (
