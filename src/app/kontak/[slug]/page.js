@@ -7,33 +7,46 @@ import Script from "next/script";
 import Cookies from "js-cookie";
 
 export default function KontakPage() {
-    const [domain, setDomain] = useState(null);
     const [data, setData] = useState(null);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const savedDomain = Cookies.get("domain");
-        if (!savedDomain) {
-            setError("Domain tidak ditemukan. Silakan akses lewat link domain Anda.");
-            return;
-        }
+        const params = new URLSearchParams(window.location.search);
+        const urlDomain = params.get("domain");
+        const namaOrang = params.get("nama_orang");
 
-        setDomain(savedDomain);
+        const finalDomain = urlDomain || Cookies.get("domain") || "defaultDomain.com";
 
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/websupport?domain=${savedDomain}`);
+                const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                if (result.error) {
-                    setError(result.error);
-                } else if (Array.isArray(result) && result.length > 0) {
-                    setData(result[0]);
-                } else {
-                    setError("Data tidak ditemukan.");
+                let finalData = {
+                    name: "Hamsul Hasan",
+                    whatsapp: "6281911846119",
+                };
+
+                // Pakai data API jika tersedia
+                if (!result.error && Array.isArray(result) && result.length > 0) {
+                    finalData = { ...result[0] };
                 }
+
+                // Override nama dari query param jika ada
+                if (namaOrang) finalData.name = namaOrang;
+
+                // Override nomor untuk domain tertentu
+                if (finalDomain.toLowerCase() === "cahyo") {
+                    finalData.whatsapp = "628123456789"; // nomor Cahyo
+                }
+
+                setData(finalData);
             } catch (err) {
-                setError("Terjadi error saat mengambil data.");
+                setError("Terjadi error saat mengambil data, menggunakan fallback default.");
+                setData({
+                    name: "Hamsul Hasan",
+                    whatsapp: "6281911846119",
+                });
             }
         };
 
@@ -81,9 +94,9 @@ export default function KontakPage() {
                     Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.
                 </p>
 
-                {error ? (
-                    <p className="text-red-400 mb-4">{error}</p>
-                ) : data ? (
+                {error && <p className="text-red-400 mb-4">{error}</p>}
+
+                {data ? (
                     <>
                         <div className="flex flex-col items-center mb-6">
                             <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-md">

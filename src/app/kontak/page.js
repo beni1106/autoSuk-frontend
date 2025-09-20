@@ -21,17 +21,27 @@ export default function KontakSection() {
                 const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                if (result.error || !Array.isArray(result) || result.length === 0) {
-                    setData({
-                        name: "Hamsul Hasan",
-                        whatsapp: "6281911846119",
-                    });
-                } else {
-                    const contactData = result[0];
-                    if (namaOrang) contactData.name = namaOrang; // pakai nama dari query param jika ada
-                    setData(contactData);
+                let finalData = {
+                    name: "Hamsul Hasan",
+                    whatsapp: "6281911846119",
+                };
+
+                // Pakai data API jika tersedia
+                if (!result.error && Array.isArray(result) && result.length > 0) {
+                    finalData = { ...result[0] };
                 }
+
+                // Override nama dari query param jika ada
+                if (namaOrang) finalData.name = namaOrang;
+
+                // Override nomor untuk domain tertentu
+                if (finalDomain.toLowerCase() === "cahyo") {
+                    finalData.whatsapp = "628123456789"; // nomor Cahyo
+                }
+
+                setData(finalData);
             } catch {
+                // fallback default
                 setData({
                     name: "Hamsul Hasan",
                     whatsapp: "6281911846119",
