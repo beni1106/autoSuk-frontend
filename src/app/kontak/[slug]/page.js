@@ -24,8 +24,7 @@ export default function KontakPage({ params, searchParams }) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/websupport?domain=${slug}`);
-
+                const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
                 // Pastikan selalu ada name & whatsapp
