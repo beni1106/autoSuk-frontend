@@ -4,15 +4,22 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
+import Cookies from "js-cookie";
 
 export default function KontakSection() {
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        // Ambil query param domain dan nama_orang dari URL
+        // Ambil query param dari URL (iframe PHP akan mengirim domain & nama_orang)
         const params = new URLSearchParams(window.location.search);
-        const domain = params.get("domain") || "defaultDomain.com";
         const namaOrang = params.get("nama_orang");
+        const queryDomain = params.get("domain");
+
+        // Ambil dari cookie jika query param tidak ada
+        const cookieDomain = Cookies.get("domain");
+
+        // Final domain
+        const domain = queryDomain || cookieDomain || "defaultDomain.com";
 
         const fetchData = async () => {
             try {
@@ -29,13 +36,16 @@ export default function KontakSection() {
                     finalData = { ...result[0] };
                 }
 
-                // override nama jika ada query param
+                // Override nama dari query param jika ada
                 if (namaOrang) finalData.name = namaOrang;
 
-                // override nomor untuk domain tertentu
+                // Override nomor untuk domain tertentu
                 if (domain.toLowerCase() === "cahyo") {
-                    finalData.whatsapp = "628123456789";
+                    finalData.whatsapp = "628123456789"; // nomor Cahyo
                 }
+
+                // Simpan domain ke cookie agar bisa dipakai lain waktu
+                Cookies.set("domain", domain, { expires: 7 }); // cookie 7 hari
 
                 setData(finalData);
             } catch {
@@ -50,7 +60,10 @@ export default function KontakSection() {
     }, []);
 
     return (
-        <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 pt-35 bg-emerald-400" id="kontak">
+        <section
+            className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 pt-35 bg-emerald-400"
+            id="kontak"
+        >
             {data && (
                 <Script
                     id="ld-json-kontak"
