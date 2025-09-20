@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 
 export default function PageDaftar() {
-    const [domain, setDomain] = useState(null);
+    // Fallback domain jika cookie/query param tidak ada
+    const [domain, setDomain] = useState("defaultDomain.com");
     const [form, setForm] = useState({
         nama: "",
         email: "",
@@ -15,12 +16,27 @@ export default function PageDaftar() {
     });
     const [loading, setLoading] = useState(false);
 
+    // Ambil domain dari cookie atau query param & nama_orang dari query param
     useEffect(() => {
+        // 1️⃣ Cookie
         const savedDomain = Cookies.get("domain");
-        if (savedDomain) {
-            setDomain(savedDomain);
-        }
+        if (savedDomain) setDomain(savedDomain);
+
+        // 2️⃣ Query param
+        const params = new URLSearchParams(window.location.search);
+        const urlDomain = params.get("domain");
+        const namaOrang = params.get("nama_orang");
+
+        if (urlDomain) setDomain(urlDomain);
+        if (namaOrang) setForm((f) => ({ ...f, nama: namaOrang }));
     }, []);
+
+    // Simpan domain ke cookie agar bisa dipakai next time
+    useEffect(() => {
+        if (domain) {
+            Cookies.set("domain", domain, { expires: 7, sameSite: "None", secure: true });
+        }
+    }, [domain]);
 
     const handleChange = (e) =>
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -53,14 +69,6 @@ export default function PageDaftar() {
             setLoading(false);
         }
     };
-
-    if (!domain) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-gray-700">Memuat...</p>
-            </div>
-        );
-    }
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-emerald-400 pt-20">
