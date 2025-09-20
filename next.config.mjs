@@ -3,15 +3,11 @@ const nextConfig = {
     async headers() {
         return [
             {
-                source: "/(.*)", // semua route
+                source: "/(.*)",
                 headers: [
                     {
-                        key: "X-Frame-Options",
-                        value: "ALLOW-FROM https://basspreneur.com",
-                    },
-                    {
                         key: "Content-Security-Policy",
-                        value: "frame-ancestors 'self' https://basspreneur.com",
+                        value: "frame-ancestors 'self' https://basspreneur.com;",
                     },
                     {
                         key: "Cache-Control",
