@@ -5,44 +5,42 @@ import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
 import Cookies from "js-cookie";
+import { usePathname } from "next/navigation";
 
 export default function KontakPage() {
+    const pathname = usePathname(); // Contoh: /kontak/cahyo
+    const slug = pathname.split("/")[2]; // 'cahyo' atau undefined
     const [data, setData] = useState(null);
-    const [error, setError] = useState(null);
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const urlDomain = params.get("domain");
-        const namaOrang = params.get("nama_orang");
+        const domainFromCookie = Cookies.get("domain");
 
-        const finalDomain = urlDomain || Cookies.get("domain") || "defaultDomain.com";
+        const domain = domainFromCookie || slug || "default"; // prioritas: cookie > slug > default
 
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/websupport?domain=${finalDomain}`);
+                if (domain === "default") {
+                    setData({
+                        name: "Hamsul Hasan",
+                        whatsapp: "6281911846119",
+                    });
+                    return;
+                }
+
+                const res = await fetch(`/api/websupport?domain=${domain}`);
                 const result = await res.json();
 
-                let finalData = {
-                    name: "Hamsul Hasan",
-                    whatsapp: "6281911846119",
-                };
-
-                // Pakai data API jika tersedia
-                if (!result.error && Array.isArray(result) && result.length > 0) {
-                    finalData = { ...result[0] };
+                if (result.error || !Array.isArray(result) || result.length === 0) {
+                    // fallback
+                    setData({
+                        name: "Hamsul Hasan",
+                        whatsapp: "6281911846119",
+                    });
+                } else {
+                    setData(result[0]);
                 }
-
-                // Override nama dari query param jika ada
-                if (namaOrang) finalData.name = namaOrang;
-
-                // Override nomor untuk domain tertentu
-                if (finalDomain.toLowerCase() === "cahyo") {
-                    finalData.whatsapp = "628123456789"; // nomor Cahyo
-                }
-
-                setData(finalData);
             } catch (err) {
-                setError("Terjadi error saat mengambil data, menggunakan fallback default.");
+                // fallback
                 setData({
                     name: "Hamsul Hasan",
                     whatsapp: "6281911846119",
@@ -51,7 +49,7 @@ export default function KontakPage() {
         };
 
         fetchData();
-    }, []);
+    }, [slug]);
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
@@ -93,8 +91,6 @@ export default function KontakPage() {
                 <p className="mb-6 text-gray-200">
                     Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.
                 </p>
-
-                {error && <p className="text-red-400 mb-4">{error}</p>}
 
                 {data ? (
                     <>
