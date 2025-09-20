@@ -10,33 +10,28 @@ export default function KontakSection() {
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        const domain = Cookies.get("domain");
+        const params = new URLSearchParams(window.location.search);
+        const urlDomain = params.get("domain");
+        const namaOrang = params.get("nama_orang");
+
+        const finalDomain = urlDomain || Cookies.get("domain") || "defaultDomain.com";
 
         const fetchData = async () => {
             try {
-                if (!domain) {
-                    // fallback default
-                    setData({
-                        name: "Hamsul Hasan",
-                        whatsapp: "6281911846119",
-                    });
-                    return;
-                }
-
-                const res = await fetch(`/api/websupport?domain=${domain}`);
+                const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
                 if (result.error || !Array.isArray(result) || result.length === 0) {
-                    // fallback default
                     setData({
                         name: "Hamsul Hasan",
                         whatsapp: "6281911846119",
                     });
                 } else {
-                    setData(result[0]);
+                    const contactData = result[0];
+                    if (namaOrang) contactData.name = namaOrang; // pakai nama dari query param jika ada
+                    setData(contactData);
                 }
-            } catch (err) {
-                // fallback default
+            } catch {
                 setData({
                     name: "Hamsul Hasan",
                     whatsapp: "6281911846119",
