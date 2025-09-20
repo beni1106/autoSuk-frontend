@@ -9,16 +9,27 @@ import Cookies from "js-cookie";
 export default function KontakSection() {
     const [data, setData] = useState(null);
 
-    useEffect(() => {
-        // 1️⃣ Ambil domain dari query param
+    // 🔹 helper ambil query param nama_orang
+    function getNamaOrangFromURL() {
+        if (typeof window === "undefined") return null;
         const params = new URLSearchParams(window.location.search);
+        return params.get("nama_orang");
+    }
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        // 1️⃣ Ambil query param `nama_orang` dulu
+        const queryNamaOrang = getNamaOrangFromURL();
+
+        // 2️⃣ Kalau ga ada, fallback ke `domain`
         const queryDomain = params.get("domain");
 
-        // 2️⃣ Fallback ke cookie
+        // 3️⃣ Kalau ga ada juga, fallback cookie
         const cookieDomain = Cookies.get("domain");
 
-        // 3️⃣ Fallback default
-        const finalDomain = queryDomain || cookieDomain || "default";
+        // 4️⃣ Final pilihannya
+        const finalDomain = queryNamaOrang || queryDomain || cookieDomain || "default";
 
         const fetchData = async () => {
             try {
