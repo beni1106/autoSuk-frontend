@@ -10,15 +10,15 @@ export default function KontakPage() {
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        // Ambil domain dari query param
-        const params = new URLSearchParams(window.location.search);
-        const queryDomain = params.get("domain");
+        // ambil slug terakhir dari URL path
+        const pathSegments = window.location.pathname.split("/").filter(Boolean);
+        const slug = pathSegments[pathSegments.length - 1];
 
         // fallback ke cookie
         const cookieDomain = Cookies.get("domain");
 
         // fallback default
-        const finalDomain = queryDomain || cookieDomain || "default";
+        const finalDomain = slug || cookieDomain || "default";
 
         const fetchData = async () => {
             try {
@@ -32,7 +32,9 @@ export default function KontakPage() {
                         : { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
                 setData(finalData);
-            } catch {
+                console.log("🌐 Final domain:", finalDomain, "Data:", finalData);
+            } catch (err) {
+                console.error(err);
                 setData({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
             }
         };
