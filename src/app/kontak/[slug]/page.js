@@ -6,50 +6,53 @@ import { Phone } from "lucide-react";
 import Script from "next/script";
 import Cookies from "js-cookie";
 
-export default function KontakPage() {
+export default function KontakPage({ params, searchParams }) {
+    // Ambil slug dari URL (Next.js App Router)
+    const slug = params?.slug || null;
+
+    // Ambil query param "domain" dari URL
+    const queryDomain = searchParams?.domain || null;
+
+    // Cookie fallback
+    const cookieDomain = typeof window !== "undefined" ? Cookies.get("domain") : null;
+
+    // Domain final: query > slug > cookie > default
+    const finalDomain = queryDomain || slug || cookieDomain || "default";
+
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        // Ambil slug terakhir dari URL path (sesuai PHP $encoded_nama_orang)
-        const pathSegments = window.location.pathname.split("/").filter(Boolean);
-        const slug = pathSegments[pathSegments.length - 1];
-
-        // fallback ke cookie
-        const cookieDomain = Cookies.get("domain");
-
-        // fallback default
-        const finalDomain = slug || cookieDomain || "default";
-
         const fetchData = async () => {
             try {
                 const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                const finalData =
-                    result && result.name && result.whatsapp
-                        ? result
-                        : { name: "Hamsul Hasan", whatsapp: "6281911846119" };
-
-                setData(finalData);
-                console.log("🌐 Final domain:", finalDomain, "Data:", finalData);
+                // Pastikan selalu ada name & whatsapp
+                if (result.name && result.whatsapp) {
+                    setData(result);
+                } else {
+                    setData({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
+                }
             } catch (err) {
-                console.error(err);
+                console.error("Error fetch API:", err);
                 setData({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
             }
         };
 
         fetchData();
-    }, []);
+    }, [finalDomain]);
 
-    if (!data)
+    if (!data) {
         return (
             <div className="flex items-center justify-center min-h-screen text-gray-700">
                 Memuat kontak...
             </div>
         );
+    }
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
+            {/* JSON-LD */}
             <Script
                 id="ld-json-kontak"
                 type="application/ld+json"
@@ -84,10 +87,10 @@ export default function KontakPage() {
             >
                 <h2 className="text-2xl font-bold mb-4">Butuh Bantuan?</h2>
                 <p className="mb-6 text-gray-200">
-                    Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang
-                    bisnis PT BASS.
+                    Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.
                 </p>
 
+                {/* Avatar + Kontak */}
                 <div className="flex flex-col items-center mb-6">
                     <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-md">
                         <Phone className="w-10 h-10 text-emerald-500" />
@@ -96,6 +99,7 @@ export default function KontakPage() {
                     <p className="text-sm text-gray-300">{data.whatsapp}</p>
                 </div>
 
+                {/* Tombol WhatsApp */}
                 <motion.a
                     href={`https://wa.me/${data.whatsapp}`}
                     target="_blank"
@@ -107,6 +111,7 @@ export default function KontakPage() {
                     HUBUNGI via WHATSAPP
                 </motion.a>
 
+                {/* Tombol Daftar */}
                 <motion.a
                     href="/daftar"
                     whileHover={{ scale: 1.05 }}
