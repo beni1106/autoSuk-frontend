@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
-    // Ambil domain dari query param, kalau kosong pakai default
-    const domain = searchParams.get("domain") || "defaultDomain";
+    const domain = searchParams.get("domain");
     const token = process.env.API_TOKEN;
 
-    const fallbackData = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
+    // fallback default
+    const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
-    if (!token) {
-        return NextResponse.json(
-            { error: "Token kosong", fallback: fallbackData },
-            { status: 400, headers: { "Access-Control-Allow-Origin": "*" } }
-        );
+    if (!domain || !token) {
+        return NextResponse.json(fallback, {
+            headers: { "Access-Control-Allow-Origin": "*" },
+            status: 400,
+        });
     }
 
     const url = `https://autosukses2u.co.id/apps/getWebsupport?domain=${domain}&token=${token}`;
@@ -20,7 +20,7 @@ export async function GET(req) {
 
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10 detik
 
         const res = await fetch(url, { signal: controller.signal });
         clearTimeout(timeout);
@@ -30,32 +30,41 @@ export async function GET(req) {
         try {
             data = JSON.parse(text);
         } catch {
-            // Kalau response bukan JSON, pakai fallback
-            return NextResponse.json({ fallback: fallbackData }, { headers: { "Access-Control-Allow-Origin": "*" } });
+            return NextResponse.json(fallback, {
+                headers: { "Access-Control-Allow-Origin": "*" },
+                status: 500,
+            });
         }
 
-        // Pastikan data array dan ada property whatsapp
-        if (!Array.isArray(data) || !data[0]?.whatsapp) {
-            return NextResponse.json({ fallback: fallbackData }, { headers: { "Access-Control-Allow-Origin": "*" } });
+        // Client-safe: pastikan selalu object {name, whatsapp}
+        let dataObj;
+        if (Array.isArray(data) && data.length > 0) {
+            dataObj = data[0];
+        } else if (data.name && data.whatsapp) {
+            dataObj = data;
+        } else {
+            dataObj = fallback;
         }
 
-        return NextResponse.json(data, { headers: { "Access-Control-Allow-Origin": "*" } });
-
+        return NextResponse.json(dataObj, {
+            headers: { "Access-Control-Allow-Origin": "*" },
+        });
     } catch (err) {
         console.error("❌ Error:", err.message);
-        return NextResponse.json({ fallback: fallbackData, error: err.message }, { headers: { "Access-Control-Allow-Origin": "*" } });
+        return NextResponse.json(fallback, {
+            headers: { "Access-Control-Allow-Origin": "*" },
+            status: 500,
+        });
     }
 }
 
+// handle preflight
 export async function OPTIONS() {
-    return NextResponse.json(
-        {},
-        {
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            },
-        }
-    );
+    return NextResponse.json({}, {
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+    });
 }

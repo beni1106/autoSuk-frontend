@@ -1,74 +1,63 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
 import Cookies from "js-cookie";
-import { usePathname } from "next/navigation";
 
 export default function KontakPage() {
-    const pathname = usePathname(); // Contoh: /kontak/cahyo
-    const slug = pathname.split("/")[2]; // 'cahyo' atau undefined
+    const pathname = usePathname(); // dapatkan slug dari URL
+    const slug = pathname?.split("/").pop(); // terakhir di path
+    const [domain, setDomain] = useState(slug || null);
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        const domainFromCookie = Cookies.get("domain");
-
-        const domain = domainFromCookie || slug || "default"; // prioritas: cookie > slug > default
+        // fallback pakai cookie kalau slug kosong
+        const savedDomain = Cookies.get("domain");
+        const finalDomain = domain || savedDomain || "default";
 
         const fetchData = async () => {
             try {
-                if (domain === "default") {
-                    setData({
-                        name: "Hamsul Hasan",
-                        whatsapp: "6281911846119",
-                    });
-                    return;
-                }
-
-                const res = await fetch(`/api/websupport?domain=${domain}`);
+                const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
-
-                if (result.error || !Array.isArray(result) || result.length === 0) {
-                    // fallback
-                    setData({
-                        name: "Hamsul Hasan",
-                        whatsapp: "6281911846119",
-                    });
-                } else {
-                    setData(result[0]);
-                }
+                console.log("Domain:", finalDomain, "API result:", result);
+                setData(result);
             } catch (err) {
+                console.error("Error fetching data:", err);
                 // fallback
-                setData({
-                    name: "Hamsul Hasan",
-                    whatsapp: "6281911846119",
-                });
+                setData({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
             }
         };
 
         fetchData();
-    }, [slug]);
+    }, [domain]);
+
+    if (!data) {
+        return (
+            <div className="flex items-center justify-center min-h-screen text-gray-700">
+                Memuat kontak...
+            </div>
+        );
+    }
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
-            {data && (
-                <Script
-                    id="ld-json-kontak"
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{
-                        __html: JSON.stringify({
-                            "@context": "https://schema.org",
-                            "@type": "Person",
-                            name: data.name,
-                            telephone: data.whatsapp,
-                            url: `https://wa.me/${data.whatsapp}`,
-                            jobTitle: "Mitra BGN - SSBTEAM",
-                        }),
-                    }}
-                />
-            )}
+            <Script
+                id="ld-json-kontak"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "Person",
+                        name: data.name,
+                        telephone: data.whatsapp,
+                        url: `https://wa.me/${data.whatsapp}`,
+                        jobTitle: "Mitra BGN - SSBTEAM",
+                    }),
+                }}
+            />
 
             <motion.h1
                 initial={{ opacity: 0, y: -30 }}
@@ -92,30 +81,24 @@ export default function KontakPage() {
                     Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.
                 </p>
 
-                {data ? (
-                    <>
-                        <div className="flex flex-col items-center mb-6">
-                            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-md">
-                                <Phone className="w-10 h-10 text-emerald-500" />
-                            </div>
-                            <p className="mt-4 font-semibold">{data.name}</p>
-                            <p className="text-sm text-gray-300">{data.whatsapp}</p>
-                        </div>
+                <div className="flex flex-col items-center mb-6">
+                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-md">
+                        <Phone className="w-10 h-10 text-emerald-500" />
+                    </div>
+                    <p className="mt-4 font-semibold">{data.name}</p>
+                    <p className="text-sm text-gray-300">{data.whatsapp}</p>
+                </div>
 
-                        <motion.a
-                            href={`https://wa.me/${data.whatsapp}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="block bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg mb-4"
-                        >
-                            HUBUNGI via WHATSAPP
-                        </motion.a>
-                    </>
-                ) : (
-                    <p>Loading...</p>
-                )}
+                <motion.a
+                    href={`https://wa.me/${data.whatsapp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="block bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg mb-4"
+                >
+                    HUBUNGI via WHATSAPP
+                </motion.a>
 
                 <motion.a
                     href="/daftar"
