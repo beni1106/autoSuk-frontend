@@ -9,34 +9,36 @@ import Cookies from "js-cookie";
 export default function KontakSection() {
     const [data, setData] = useState(null);
 
-    // 🔹 helper ambil query param nama_orang
-    function getNamaOrangFromURL() {
-        if (typeof window === "undefined") return null;
+    function resolveDomain() {
+        if (typeof window === "undefined") return "default";
+
         const params = new URLSearchParams(window.location.search);
-        return params.get("nama_orang");
+
+        // 1️⃣ Query param `nama_orang`
+        const namaOrang = params.get("nama_orang");
+
+        // 2️⃣ Query param `domain`
+        const domainQuery = params.get("domain");
+
+        // 3️⃣ Slug dari path → /cahyo
+        const pathParts = window.location.pathname.split("/").filter(Boolean);
+        const slug = pathParts.length > 0 ? pathParts[0] : null;
+
+        // 4️⃣ Cookie
+        const cookieDomain = Cookies.get("domain");
+
+        // 5️⃣ Urutan prioritas
+        return namaOrang || domainQuery || slug || cookieDomain || "default";
     }
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-
-        // 1️⃣ Ambil query param `nama_orang` dulu
-        const queryNamaOrang = getNamaOrangFromURL();
-
-        // 2️⃣ Kalau ga ada, fallback ke `domain`
-        const queryDomain = params.get("domain");
-
-        // 3️⃣ Kalau ga ada juga, fallback cookie
-        const cookieDomain = Cookies.get("domain");
-
-        // 4️⃣ Final pilihannya
-        const finalDomain = queryNamaOrang || queryDomain || cookieDomain || "default";
+        const finalDomain = resolveDomain();
 
         const fetchData = async () => {
             try {
                 const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                // Fallback default kalau API error
                 let finalData = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
                 if (!result.error && result.name && result.whatsapp) {
                     finalData = result;
