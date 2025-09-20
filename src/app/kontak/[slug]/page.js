@@ -1,56 +1,54 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
+import Cookies from "js-cookie";
 
 export default function KontakPage() {
-    const pathname = usePathname();
-    const slug = pathname?.split("/").pop(); // misal 'cahyo'
-
-    const [data, setData] = useState({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
-    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState(null);
 
     useEffect(() => {
+        // Ambil domain dari query param
         const params = new URLSearchParams(window.location.search);
         const queryDomain = params.get("domain");
 
-        const finalDomain = queryDomain || slug || "default";
+        // fallback ke cookie
+        const cookieDomain = Cookies.get("domain");
+
+        // fallback default
+        const finalDomain = queryDomain || cookieDomain || "default";
 
         const fetchData = async () => {
             try {
                 const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                // Pastikan selalu object {name, whatsapp}
-                if (result && result.name && result.whatsapp) {
-                    setData(result);
-                } else {
-                    setData({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
-                }
-            } catch (err) {
-                console.error("Fetch error:", err);
+                // pastikan selalu ada data name & whatsapp
+                const finalData =
+                    result && result.name && result.whatsapp
+                        ? result
+                        : { name: "Hamsul Hasan", whatsapp: "6281911846119" };
+
+                setData(finalData);
+            } catch {
                 setData({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
-            } finally {
-                setLoading(false);
             }
         };
 
         fetchData();
-    }, [slug]);
+    }, []);
 
-    if (loading) {
+    if (!data)
         return (
             <div className="flex items-center justify-center min-h-screen text-gray-700">
                 Memuat kontak...
             </div>
         );
-    }
 
     return (
-        <section className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
+        <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
             <Script
                 id="ld-json-kontak"
                 type="application/ld+json"
@@ -72,12 +70,22 @@ export default function KontakPage() {
                 transition={{ duration: 0.6 }}
                 className="text-3xl md:text-5xl font-bold text-gray-200 max-w-3xl mb-12"
             >
-                Segera Daftarkan Diri Anda di Bisnis <span className="text-gray-800">PT BASS</span> Bersama Komunitas <span className="text-gray-800">BASSPRENEUR</span>
+                Segera Daftarkan Diri Anda di Bisnis{" "}
+                <span className="text-gray-800">PT BASS</span> Bersama Komunitas{" "}
+                <span className="text-gray-800">BASSPRENEUR</span>
             </motion.h1>
 
-            <motion.div className="bg-gray-800 rounded-2xl shadow-lg p-8 w-full max-w-md text-gray-200">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6 }}
+                className="bg-gray-800 rounded-2xl shadow-lg p-8 w-full max-w-md text-gray-200"
+            >
                 <h2 className="text-2xl font-bold mb-4">Butuh Bantuan?</h2>
-                <p className="mb-6">Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.</p>
+                <p className="mb-6 text-gray-200">
+                    Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang
+                    bisnis PT BASS.
+                </p>
 
                 <div className="flex flex-col items-center mb-6">
                     <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-md">
