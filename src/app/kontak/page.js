@@ -10,31 +10,31 @@ export default function KontakSection() {
     const [data, setData] = useState(null);
 
     useEffect(() => {
+        // 1️⃣ Ambil domain dari query param
         const params = new URLSearchParams(window.location.search);
-        const queryDomain = params.get("domain"); // prioritas utama
-        const namaOrang = params.get("nama_orang"); // opsional untuk override nama
-        const cookieDomain = Cookies.get("domain"); // fallback cookie
-        const defaultDomain = "defaultDomain.com"; // fallback terakhir
+        const queryDomain = params.get("domain");
 
-        const finalDomain = queryDomain || cookieDomain || defaultDomain;
+        // 2️⃣ Fallback ke cookie
+        const cookieDomain = Cookies.get("domain");
+
+        // 3️⃣ Fallback default domain
+        const finalDomain = queryDomain || cookieDomain || "default";
 
         const fetchData = async () => {
             try {
                 const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                // fallback default agar selalu ada nomor
+                // Fallback default jika API error atau tidak mengembalikan data
                 let finalData = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
                 if (!result.error && result.name && result.whatsapp) {
                     finalData = { ...result };
                 }
 
-                // override nama jika ada query param
-                if (namaOrang) finalData.name = namaOrang;
-
                 setData(finalData);
             } catch {
+                // fallback jika fetch gagal
                 setData({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
             }
         };
