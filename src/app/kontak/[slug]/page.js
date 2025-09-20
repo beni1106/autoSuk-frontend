@@ -10,7 +10,7 @@ export default function KontakPage() {
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        // ambil slug terakhir dari URL path
+        // Ambil slug terakhir dari URL path (sesuai PHP $encoded_nama_orang)
         const pathSegments = window.location.pathname.split("/").filter(Boolean);
         const slug = pathSegments[pathSegments.length - 1];
 
@@ -25,7 +25,6 @@ export default function KontakPage() {
                 const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                // pastikan selalu ada data name & whatsapp
                 const finalData =
                     result && result.name && result.whatsapp
                         ? result
