@@ -10,36 +10,32 @@ export default function KontakSection() {
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        // Ambil domain dari query param
         const params = new URLSearchParams(window.location.search);
-        const queryDomain = params.get("domain");
+        const queryDomain = params.get("domain"); // prioritas utama
+        const namaOrang = params.get("nama_orang"); // opsional untuk override nama
+        const cookieDomain = Cookies.get("domain"); // fallback cookie
+        const defaultDomain = "defaultDomain.com"; // fallback terakhir
 
-        // fallback ke cookie
-        const cookieDomain = Cookies.get("domain");
-
-        const finalDomain = queryDomain || cookieDomain || "defaultDomain";
+        const finalDomain = queryDomain || cookieDomain || defaultDomain;
 
         const fetchData = async () => {
             try {
                 const res = await fetch(`/api/websupport?domain=${finalDomain}`);
                 const result = await res.json();
 
-                // fallback default
-                let finalData = {
-                    name: "Hamsul Hasan",
-                    whatsapp: "6281911846119",
-                };
+                // fallback default agar selalu ada nomor
+                let finalData = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
                 if (!result.error && result.name && result.whatsapp) {
                     finalData = { ...result };
                 }
 
+                // override nama jika ada query param
+                if (namaOrang) finalData.name = namaOrang;
+
                 setData(finalData);
             } catch {
-                setData({
-                    name: "Hamsul Hasan",
-                    whatsapp: "6281911846119",
-                });
+                setData({ name: "Hamsul Hasan", whatsapp: "6281911846119" });
             }
         };
 
@@ -72,12 +68,16 @@ export default function KontakSection() {
                 transition={{ duration: 0.6 }}
                 className="text-3xl md:text-5xl font-bold text-gray-200 mb-12"
             >
-                Segera Daftarkan Diri Anda di Bisnis <span className="text-gray-800">PT BASS</span> Bersama Komunitas <span className="text-gray-800">BASSPRENEUR</span>
+                Segera Daftarkan Diri Anda di Bisnis{" "}
+                <span className="text-gray-800">PT BASS</span> Bersama Komunitas{" "}
+                <span className="text-gray-800">BASSPRENEUR</span>
             </motion.h1>
 
             <motion.div className="bg-gray-800 rounded-2xl shadow-lg p-8 w-full max-w-md text-gray-200">
                 <h2 className="text-2xl font-bold mb-4">Butuh Bantuan?</h2>
-                <p className="mb-6">Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.</p>
+                <p className="mb-6">
+                    Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.
+                </p>
 
                 <div className="flex flex-col items-center mb-6">
                     <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-md">
