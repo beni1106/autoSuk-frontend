@@ -1,32 +1,39 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 
-export default function PageDomain({ params }) {
-    const router = useRouter();
-    // ✅ langsung ambil dari props
-    const { domain } = params;
+export default function PageDomain() {
+    const searchParams = useSearchParams();
+    const domain = searchParams.get("nama_orang") || "cahyo"; // default 'cahyo'
+
+    const [kontak, setKontak] = useState(null);
 
     useEffect(() => {
-        const value = domain || "cahyo"; // default ke "cahyo"
-        Cookies.set("domain", value, { expires: 7, path: "/" });
-        // redirect ke beranda
-        const t = setTimeout(() => {
-            router.replace("/");
-        }, 300);
+        Cookies.set("domain", domain, { expires: 7, path: "/" });
 
-        return () => clearTimeout(t);
-    }, [domain, router]);
+        async function fetchKontak() {
+            try {
+                const res = await fetch(
+                    `https://autosukses2u.co.id/apps/getWebsupport?domain=${domain}&token=BAS2025`
+                );
+                const data = await res.json();
+                setKontak(data);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        fetchKontak();
+    }, [domain]);
+
+    if (!kontak) return <p>Loading...</p>;
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-emerald-400">
-            <div className="bg-white px-6 py-4 rounded-lg shadow-md">
-                <p className="text-gray-700 font-medium">
-                    Mengalihkan ke beranda...
-                </p>
-            </div>
+        <div className="p-6">
+            <h1 className="text-xl font-bold">Kontak {domain}</h1>
+            <pre>{JSON.stringify(kontak, null, 2)}</pre>
         </div>
     );
 }
