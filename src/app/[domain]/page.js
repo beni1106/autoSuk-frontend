@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 
 export default function PageDomain() {
-    const [domain, setDomain] = useState("hamsul hasan");
+    const [domain, setDomain] = useState(null);
     const [kontak, setKontak] = useState(null);
+
+    const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
     useEffect(() => {
         const sp = new URLSearchParams(window.location.search);
@@ -18,10 +20,17 @@ export default function PageDomain() {
             try {
                 const res = await fetch(`https://autosukses2u.co.id/apps/getWebsupport?domain=${namaOrang}&token=BAS2025`);
                 const data = await res.json();
-                setKontak(data);
+
+                // ✅ Jika API gagal/return error → pakai fallback
+                if (data?.error) {
+                    setKontak(fallback);
+                } else {
+                    setKontak(data);
+                }
             } catch (err) {
                 console.error(err);
-                setKontak({ error: "Gagal fetch kontak" });
+                // ✅ Pakai fallback saat fetch error
+                setKontak(fallback);
             }
         }
 
@@ -33,7 +42,8 @@ export default function PageDomain() {
     return (
         <div>
             <h1>Kontak {domain}</h1>
-            <pre>{JSON.stringify(kontak, null, 2)}</pre>
+            <p>Nama: {kontak.name}</p>
+            <p>WhatsApp: {kontak.whatsapp}</p>
         </div>
     );
 }
