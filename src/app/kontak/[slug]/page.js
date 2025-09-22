@@ -16,44 +16,36 @@ export default function KontakPage() {
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
-    // ✅ Tentukan domain
+    // ✅ Tentukan domain: query string > slug > cookie > fallback
     useEffect(() => {
-        if (slugDomain) {
-            setDomain(slugDomain);
-            Cookies.set("domain", slugDomain, { expires: 7 });
-        } else {
-            const saved = Cookies.get("domain");
-            setDomain(saved || null);
-        }
+        const sp = new URLSearchParams(window.location.search);
+        const namaOrang = sp.get("nama_orang") || slugDomain || Cookies.get("domain") || "hamsul hasan";
+        setDomain(namaOrang);
+        Cookies.set("domain", namaOrang, { expires: 7, path: "/" });
     }, [slugDomain]);
 
-    // ✅ Fetch data
+    // ✅ Fetch data kontak dari API
     useEffect(() => {
         if (!domain) {
-            // ➡️ Tidak ada slug & cookie → fallback
             setData(fallback);
             return;
         }
 
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/websupport?domain=${domain}`);
+                const res = await fetch(`/api/websupport?domain=${encodeURIComponent(domain)}`);
                 if (!res.ok) throw new Error("Fetch error");
 
                 const result = await res.json();
-                console.log("🌐 API result:", result);
 
                 // API bisa kirim array atau object
                 const apiData = Array.isArray(result) ? result[0] : result;
 
-                // Pastikan cek error dengan benar
-                const isError =
-                    apiData?.error === true || apiData?.error === "true";
+                const isError = apiData?.error === true || apiData?.error === "true";
 
                 if (!isError && apiData?.name && apiData?.whatsapp) {
                     setData({ name: apiData.name, whatsapp: apiData.whatsapp });
                 } else {
-                    // ➡️ API kirim error → fallback
                     setData(fallback);
                 }
             } catch (err) {
