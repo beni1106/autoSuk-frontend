@@ -1,23 +1,24 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { CACHE_ONE_YEAR } from "next/dist/lib/constants";
 
 export default function PageDomain({ params }) {
     const router = useRouter();
-    const { domain } = use(params); // ✅ cara baru
+    // ✅ langsung ambil dari props
+    const { domain } = params;
 
     useEffect(() => {
         const value = domain || "cahyo"; // default ke "cahyo"
         Cookies.set("domain", value, { expires: 7, path: "/" });
-        setTimeout(() => {
+        // redirect ke beranda
+        const t = setTimeout(() => {
             router.replace("/");
         }, 300);
 
+        return () => clearTimeout(t);
     }, [domain, router]);
-
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-emerald-400">
