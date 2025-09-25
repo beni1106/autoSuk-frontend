@@ -2,7 +2,7 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
-import DebugPanel from "./components/DebugPanel";
+
 
 
 const montserrat = Montserrat({
@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
         <Navbar />
         <main>{children}</main>
         <Footer />
-        <DebugPanel /> {/* ✅ tampil di semua halaman */}
+
       </body>
     </html>
   );
