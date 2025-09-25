@@ -1,21 +1,39 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
 import Cookies from "js-cookie";
 
 export default function KontakPage() {
+    const searchParams = useSearchParams();
+    const domainFromQuery = searchParams.get("domain");
+
+    const [domain, setDomain] = useState(null);
     const [data, setData] = useState(null);
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
+    // ✅ Tentukan domain (query → cookie → fallback)
     useEffect(() => {
-        const domain = Cookies.get("domain");
+        if (domainFromQuery) {
+            setDomain(domainFromQuery);
+            Cookies.set("domain", domainFromQuery, { expires: 7 });
+        } else {
+            const saved = Cookies.get("domain");
+            if (saved) {
+                setDomain(saved);
+            } else {
+                setDomain(null); // biar fallback kepake
+            }
+        }
+    }, [domainFromQuery]);
 
+    // ✅ Fetch data API
+    useEffect(() => {
         if (!domain) {
-            // ➡️ Tidak ada cookie → fallback
             setData(fallback);
             return;
         }
@@ -26,21 +44,23 @@ export default function KontakPage() {
                 if (!res.ok) throw new Error("Fetch error");
 
                 const result = await res.json();
-                const contact = Array.isArray(result) ? result[0] : result;
+                console.log("🌐 API result:", result);
 
-                if (contact?.name && contact?.whatsapp) {
-                    setData(contact);
+                const apiData = Array.isArray(result) ? result[0] : result;
+
+                if (!apiData?.error && apiData?.name && apiData?.whatsapp) {
+                    setData({ name: apiData.name, whatsapp: apiData.whatsapp });
                 } else {
                     setData(fallback);
                 }
             } catch (err) {
-                console.error("❌ Error fetch:", err);
+                console.error("❌ Fetch error:", err);
                 setData(fallback);
             }
         };
 
         fetchData();
-    }, []);
+    }, [domain]);
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
@@ -72,7 +92,6 @@ export default function KontakPage() {
                 <span className="text-gray-800">BASSPRENEUR</span>
             </motion.h1>
 
-            {/* Card Kontak */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
