@@ -1,39 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 
-export default function PageDomain() {
-    const searchParams = useSearchParams();
-    const domain = searchParams.get("nama_orang") || "cahyo"; // default 'cahyo'
-
-    const [kontak, setKontak] = useState(null);
+export default function PageDomain({ params }) {
+    const router = useRouter();
+    const { domain } = params;
 
     useEffect(() => {
-        Cookies.set("domain", domain, { expires: 7, path: "/" });
-
-        async function fetchKontak() {
-            try {
-                const res = await fetch(
-                    `https://autosukses2u.co.id/apps/getWebsupport?domain=${domain}&token=BAS2025`
-                );
-                const data = await res.json();
-                setKontak(data);
-            } catch (err) {
-                console.error(err);
-            }
+        // simpan domain ke cookie
+        if (domain) {
+            Cookies.set("domain", domain, { expires: 7, path: "/" });
         }
 
-        fetchKontak();
-    }, [domain]);
+        // redirect ke halaman utama
+        router.replace("/");
+    }, [domain, router]);
 
-    if (!kontak) return <p>Loading...</p>;
-
-    return (
-        <div className="p-6">
-            <h1 className="text-xl font-bold">Kontak {domain}</h1>
-            <pre>{JSON.stringify(kontak, null, 2)}</pre>
-        </div>
-    );
+    return null; // kosong aja, soalnya langsung redirect
 }
