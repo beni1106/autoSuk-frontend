@@ -19,7 +19,12 @@ export default function KontakPage() {
 
         if (d) {
             setDomain(d);
-            Cookies.set("domain", d, { expires: 7 });
+            // ✅ cookie diset agar bisa lintas iframe
+            Cookies.set("domain", d, {
+                expires: 7,
+                sameSite: "None",
+                secure: true,
+            });
         } else {
             const saved = Cookies.get("domain");
             setDomain(saved || null);
@@ -35,7 +40,11 @@ export default function KontakPage() {
 
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/websupport?domain=${domain}`);
+                const res = await fetch(`/api/websupport?domain=${domain}`, {
+                    method: "GET",
+                    credentials: "include", // ✅ biar cookie ikut ke server
+                });
+
                 if (!res.ok) throw new Error("Fetch error");
 
                 const result = await res.json();

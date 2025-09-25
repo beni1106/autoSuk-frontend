@@ -13,12 +13,18 @@ export default function KontakSlugPage() {
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
+    // 🔹 Set cookie untuk slug (biar kebaca juga di iframe)
     useEffect(() => {
         if (slug) {
-            Cookies.set("domain", slug, { expires: 7 });
+            Cookies.set("domain", slug, {
+                expires: 7,
+                sameSite: "None", // ✅ wajib untuk iframe cross-domain
+                secure: true,     // ✅ wajib kalau pakai https
+            });
         }
     }, [slug]);
 
+    // 🔹 Fetch ke API Next.js
     useEffect(() => {
         if (!slug) {
             setData(fallback);
@@ -27,7 +33,11 @@ export default function KontakSlugPage() {
 
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/websupport?domain=${slug}`);
+                const res = await fetch(`/api/websupport?domain=${slug}`, {
+                    method: "GET",
+                    credentials: "include", // ✅ biar cookie ikut
+                });
+
                 if (!res.ok) throw new Error("Fetch error");
 
                 const result = await res.json();
@@ -49,6 +59,7 @@ export default function KontakSlugPage() {
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
+            {/* Structured Data JSON-LD */}
             {data && (
                 <Script
                     id="ld-json-kontak"
@@ -66,6 +77,7 @@ export default function KontakSlugPage() {
                 />
             )}
 
+            {/* H1 */}
             <motion.h1
                 initial={{ opacity: 0, y: -30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -77,6 +89,7 @@ export default function KontakSlugPage() {
                 <span className="text-gray-800">BASSPRENEUR</span>
             </motion.h1>
 
+            {/* Card Kontak */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
