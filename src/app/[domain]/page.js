@@ -8,18 +8,24 @@ export default function PageDomain({ params }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Ambil domain dari route (/cahyo) atau query (?nama_orang=cahyo)
+    // Ambil domain dari URL dynamic route (/cahyo) atau query (?nama_orang=...)
     const domain = params?.domain || searchParams.get("nama_orang") || "cahyo";
 
     const [kontak, setKontak] = useState(null);
 
     useEffect(() => {
-        if (!domain) return;
+        if (domain) {
+            // simpan cookie supaya bisa dipakai di halaman lain
+            Cookies.set("domain", domain, { expires: 7, path: "/" });
 
-        // 1. simpan cookie
-        Cookies.set("domain", domain, { expires: 7, path: "/" });
+            // Kalau akses lewat /cahyo → redirect ke home
+            if (params?.domain) {
+                router.replace("/");
+                return; // stop, jangan lanjut fetch
+            }
+        }
 
-        // 2. fetch data
+        // Kalau bukan redirect (misalnya query param langsung) → fetch data
         async function fetchKontak() {
             try {
                 const res = await fetch(
@@ -27,28 +33,27 @@ export default function PageDomain({ params }) {
                 );
                 const data = await res.json();
                 setKontak(data);
-
-                // 3. redirect setelah data siap
-                router.replace("/");
             } catch (err) {
                 console.error("Gagal ambil data:", err);
-                router.replace("/"); // tetap redirect walau gagal fetch
             }
         }
 
         fetchKontak();
-    }, [domain, router]);
+    }, [domain, params, router]);
 
-    if (!kontak) {
-        return <p>Loading data untuk {domain}...</p>;
+    if (params?.domain) {
+        // Sementara kosong, karena langsung redirect
+        return null;
     }
 
-    // Optional: tampilkan data sebentar sebelum redirect
+    if (!kontak) {
+        return <p>Loading...</p>;
+    }
+
     return (
         <div className="p-6">
-            <h1 className="text-xl font-bold">Mengambil data {domain}...</h1>
+            <h1 className="text-xl font-bold">Kontak {domain}</h1>
             <pre>{JSON.stringify(kontak, null, 2)}</pre>
-            <p>Redirecting ke home...</p>
         </div>
     );
 }
