@@ -4,62 +4,72 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 
 export default function KontakSlugPage() {
-    const { slug } = useParams();
+    const { slug: slugFromPath } = useParams();           // slug dari dynamic route
+    const searchParams = useSearchParams();               // query param
+    const slugFromQuery = searchParams.get("domain");     // ex: ?domain=cahyo
+    const [domain, setDomain] = useState(null);
     const [data, setData] = useState(null);
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
-    // 🔹 Set cookie untuk slug (biar kebaca juga di iframe)
+    // ✅ Tentukan domain final (param > cookie)
     useEffect(() => {
-        if (slug) {
-            Cookies.set("domain", slug, {
+        // 1️⃣ Cek query ?domain
+        if (slugFromQuery) {
+            setDomain(slugFromQuery);
+            Cookies.set("domain", slugFromQuery, {
                 expires: 7,
-                sameSite: "None", // ✅ wajib untuk iframe cross-domain
-                secure: true,     // ✅ wajib kalau pakai https
+                sameSite: "None",
+                secure: true,
             });
-        }
-    }, [slug]);
-
-    // 🔹 Fetch ke API Next.js
-    useEffect(() => {
-        if (!slug) {
-            setData(fallback);
             return;
         }
 
-        const fetchData = async () => {
-            try {
-                const res = await fetch(`/api/websupport?domain=${slug}`, {
-                    method: "GET",
-                    credentials: "include", // ✅ biar cookie ikut
-                });
+        // 2️⃣ Cek slug route
+        if (slugFromPath) {
+            setDomain(slugFromPath);
+            Cookies.set("domain", slugFromPath, {
+                expires: 7,
+                sameSite: "None",
+                secure: true,
+            });
+            return;
+        }
 
+        // 3️⃣ Fallback ke cookie
+        const cookieDomain = Cookies.get("domain");
+        if (cookieDomain) {
+            setDomain(cookieDomain);
+        }
+    }, [slugFromPath, slugFromQuery]);
+
+    // ✅ Fetch API sesuai domain
+    useEffect(() => {
+        if (!domain) { setData(fallback); return; }
+
+        (async () => {
+            try {
+                const res = await fetch(`/api/websupport?domain=${domain}`, {
+                    credentials: "include",
+                });
                 if (!res.ok) throw new Error("Fetch error");
 
-                const result = await res.json();
-                const contact = Array.isArray(result) ? result[0] : result;
-
-                if (contact?.name && contact?.whatsapp) {
-                    setData(contact);
-                } else {
-                    setData(fallback);
-                }
+                const json = await res.json();
+                const contact = Array.isArray(json) ? json[0] : json;
+                setData(contact?.name && contact?.whatsapp ? contact : fallback);
             } catch (err) {
-                console.error("❌ Error fetch:", err);
+                console.error("❌ Fetch error:", err);
                 setData(fallback);
             }
-        };
-
-        fetchData();
-    }, [slug]);
+        })();
+    }, [domain]);
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
-            {/* Structured Data JSON-LD */}
             {data && (
                 <Script
                     id="ld-json-kontak"
@@ -77,7 +87,6 @@ export default function KontakSlugPage() {
                 />
             )}
 
-            {/* H1 */}
             <motion.h1
                 initial={{ opacity: 0, y: -30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -89,7 +98,6 @@ export default function KontakSlugPage() {
                 <span className="text-gray-800">BASSPRENEUR</span>
             </motion.h1>
 
-            {/* Card Kontak */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+// ✅ API untuk ambil kontak + set cookie cross-domain
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const domain = searchParams.get("domain");
@@ -9,11 +10,8 @@ export async function GET(req) {
 
     if (!domain || !token) {
         return NextResponse.json(fallback, {
-            headers: {
-                "Access-Control-Allow-Origin": "https://basspreneur.com", // ⬅️ ganti spesifik
-                "Access-Control-Allow-Credentials": "true",
-            },
             status: 400,
+            headers: corsHeaders(),
         });
     }
 
@@ -22,68 +20,51 @@ export async function GET(req) {
     try {
         const res = await fetch(url);
         const text = await res.text();
+        let parsed;
 
-        let data;
         try {
-            data = JSON.parse(text);
-        } catch (e) {
-            return NextResponse.json(fallback, {
-                headers: {
-                    "Access-Control-Allow-Origin": "https://basspreneur.com",
-                    "Access-Control-Allow-Credentials": "true",
-                },
-                status: 500,
-            });
+            parsed = JSON.parse(text);
+        } catch {
+            return NextResponse.json(fallback, { status: 500, headers: corsHeaders() });
         }
 
-        let dataObj = fallback;
-        if (Array.isArray(data) && data.length > 0) {
-            const item = data[0];
-            if ((item.error === false || item.error === "false") && item.name && item.whatsapp) {
-                dataObj = { name: item.name, whatsapp: item.whatsapp };
-            }
-        } else if (data && typeof data === "object") {
-            if ((data.error === false || data.error === "false") && data.name && data.whatsapp) {
-                dataObj = { name: data.name, whatsapp: data.whatsapp };
-            }
+        let data = fallback;
+        if (Array.isArray(parsed) && parsed[0]?.name && parsed[0]?.whatsapp && (parsed[0].error === false || parsed[0].error === "false")) {
+            data = { name: parsed[0].name, whatsapp: parsed[0].whatsapp };
+        } else if (parsed?.name && parsed?.whatsapp && (parsed.error === false || parsed.error === "false")) {
+            data = { name: parsed.name, whatsapp: parsed.whatsapp };
         }
 
-        const response = NextResponse.json(dataObj, {
-            headers: {
-                "Access-Control-Allow-Origin": "https://basspreneur.com", // ⬅️ harus spesifik
-                "Access-Control-Allow-Credentials": "true",
-            },
-        });
+        const response = NextResponse.json(data, { headers: corsHeaders() });
 
-        // 🔹 Set cookie cross-domain
+        // ✅ Cookie untuk iframe (dibaca js-cookie di client)
         response.cookies.set("domain", domain, {
-            httpOnly: false,   // biar bisa dibaca di client js-cookie
-            secure: true,      // wajib kalau pakai SameSite=None
-            sameSite: "none",  // biar cookie bisa nyebrang iframe
+            httpOnly: false,
+            secure: true,
+            sameSite: "none",
             path: "/",
-            maxAge: 60 * 60,   // 1 jam
+            maxAge: 60 * 60, // 1 jam
         });
 
         return response;
-    } catch (err) {
-        return NextResponse.json(fallback, {
-            headers: {
-                "Access-Control-Allow-Origin": "https://basspreneur.com",
-                "Access-Control-Allow-Credentials": "true",
-            },
-            status: 500,
-        });
+    } catch {
+        return NextResponse.json(fallback, { status: 500, headers: corsHeaders() });
     }
 }
 
-// 🔹 Tambahkan preflight untuk OPTIONS
+// ✅ Preflight untuk OPTIONS
 export async function OPTIONS() {
-    return NextResponse.json({}, {
-        headers: {
-            "Access-Control-Allow-Origin": "https://basspreneur.com",
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Headers": "Content-Type",
+    return NextResponse.json({}, { headers: corsHeaders(true) });
+}
+
+// Helper CORS
+function corsHeaders(isPreflight = false) {
+    return {
+        "Access-Control-Allow-Origin": "https://basspreneur.com",
+        "Access-Control-Allow-Credentials": "true",
+        ...(isPreflight && {
             "Access-Control-Allow-Methods": "GET,OPTIONS",
-        },
-    });
+            "Access-Control-Allow-Headers": "Content-Type",
+        }),
+    };
 }
