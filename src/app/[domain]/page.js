@@ -9,31 +9,17 @@ export default function PageDomain({ params }) {
     const { domain } = params;
 
     useEffect(() => {
-        async function processDomain() {
-            if (domain) {
-                // 1. simpan domain ke cookie
-                Cookies.set("domain", domain, { expires: 7, path: "/" });
+        if (domain) {
+            // simpan domain ke cookie
+            Cookies.set("domain", domain, { expires: 7, path: "/" });
 
-                // 2. fetch API
-                try {
-                    const res = await fetch(
-                        `https://autosukses2u.co.id/apps/getWebsupport?domain=${domain}&token=BAS2025`
-                    );
-                    const data = await res.json();
-
-                    // Simpan hasil fetch ke cookie/localStorage
-                    Cookies.set("kontak", JSON.stringify(data), { expires: 1, path: "/" });
-                } catch (err) {
-                    console.error("Gagal fetch:", err);
-                }
-
-                // 3. redirect ke home
-                router.replace("/");
-            }
+            // redirect ke home dengan query biar langsung kebaca
+            const t = setTimeout(() => {
+                router.replace(`/?domain=${domain}`);
+            }, 200); // kasih delay dikit biar cookie terset
+            return () => clearTimeout(t);
         }
-
-        processDomain();
     }, [domain, router]);
 
-    return <p>Loading data {domain}...</p>;
+    return null;
 }
