@@ -2,36 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
-import Script from "next/script";
-import Cookies from "js-cookie";
+import { motion } from "framer-motion";
 
 export default function KontakPage() {
     const searchParams = useSearchParams();
-    const domainFromQuery = searchParams.get("domain");
+    const domain = searchParams.get("domain");
 
-    const [domain, setDomain] = useState(null);
     const [data, setData] = useState(null);
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
-    // ✅ Tentukan domain (query → cookie → fallback)
-    useEffect(() => {
-        if (domainFromQuery) {
-            setDomain(domainFromQuery);
-            Cookies.set("domain", domainFromQuery, { expires: 7 });
-        } else {
-            const saved = Cookies.get("domain");
-            if (saved) {
-                setDomain(saved);
-            } else {
-                setDomain(null); // biar fallback kepake
-            }
-        }
-    }, [domainFromQuery]);
-
-    // ✅ Fetch data API
     useEffect(() => {
         if (!domain) {
             setData(fallback);
@@ -44,17 +25,17 @@ export default function KontakPage() {
                 if (!res.ok) throw new Error("Fetch error");
 
                 const result = await res.json();
-                console.log("🌐 API result:", result);
 
-                const apiData = Array.isArray(result) ? result[0] : result;
-
-                if (!apiData?.error && apiData?.name && apiData?.whatsapp) {
-                    setData({ name: apiData.name, whatsapp: apiData.whatsapp });
-                } else {
-                    setData(fallback);
+                let contact = null;
+                if (Array.isArray(result) && result.length > 0) {
+                    contact = result[0];
+                } else if (result?.name && result?.whatsapp) {
+                    contact = result;
                 }
+
+                setData(contact || fallback);
             } catch (err) {
-                console.error("❌ Fetch error:", err);
+                console.error("❌ Error fetch:", err);
                 setData(fallback);
             }
         };
@@ -64,23 +45,6 @@ export default function KontakPage() {
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
-            {data && (
-                <Script
-                    id="ld-json-kontak"
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{
-                        __html: JSON.stringify({
-                            "@context": "https://schema.org",
-                            "@type": "Person",
-                            name: data.name,
-                            telephone: data.whatsapp,
-                            url: `https://wa.me/${data.whatsapp}`,
-                            jobTitle: "Mitra BGN - SSBTEAM",
-                        }),
-                    }}
-                />
-            )}
-
             <motion.h1
                 initial={{ opacity: 0, y: -30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -100,7 +64,8 @@ export default function KontakPage() {
             >
                 <h2 className="text-2xl font-bold mb-4">Butuh Bantuan?</h2>
                 <p className="mb-6 text-gray-200">
-                    Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.
+                    Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang
+                    bisnis PT BASS.
                 </p>
 
                 {data ? (
