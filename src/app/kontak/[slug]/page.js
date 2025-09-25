@@ -7,63 +7,45 @@ import Script from "next/script";
 import { useParams } from "next/navigation";
 import Cookies from "js-cookie";
 
-export default function KontakPage() {
-    const params = useParams();
-    const slugDomain = params?.domain || null;
-
-    const [domain, setDomain] = useState(null);
+export default function KontakSlugPage() {
+    const { slug } = useParams();
     const [data, setData] = useState(null);
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
-    // ✅ Tentukan domain
     useEffect(() => {
-        if (slugDomain) {
-            setDomain(slugDomain);
-            Cookies.set("domain", slugDomain, { expires: 7 });
-        } else {
-            const saved = Cookies.get("domain");
-            setDomain(saved || null);
+        if (slug) {
+            Cookies.set("domain", slug, { expires: 7 });
         }
-    }, [slugDomain]);
+    }, [slug]);
 
-    // ✅ Fetch data
     useEffect(() => {
-        if (!domain) {
-            // ➡️ Tidak ada slug & cookie → fallback
+        if (!slug) {
             setData(fallback);
             return;
         }
 
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/websupport?domain=${domain}`);
+                const res = await fetch(`/api/websupport?domain=${slug}`);
                 if (!res.ok) throw new Error("Fetch error");
 
                 const result = await res.json();
-                console.log("🌐 API result:", result);
+                const contact = Array.isArray(result) ? result[0] : result;
 
-                // API bisa kirim array atau object
-                const apiData = Array.isArray(result) ? result[0] : result;
-
-                // Pastikan cek error dengan benar
-                const isError =
-                    apiData?.error === true || apiData?.error === "true";
-
-                if (!isError && apiData?.name && apiData?.whatsapp) {
-                    setData({ name: apiData.name, whatsapp: apiData.whatsapp });
+                if (contact?.name && contact?.whatsapp) {
+                    setData(contact);
                 } else {
-                    // ➡️ API kirim error → fallback
                     setData(fallback);
                 }
             } catch (err) {
-                console.error("Fetch error:", err);
+                console.error("❌ Error fetch:", err);
                 setData(fallback);
             }
         };
 
         fetchData();
-    }, [domain]);
+    }, [slug]);
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">

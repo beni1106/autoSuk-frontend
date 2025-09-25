@@ -6,55 +6,36 @@ import { Phone } from "lucide-react";
 import Script from "next/script";
 import Cookies from "js-cookie";
 
-export default function KontakSection() {
+export default function KontakPage() {
     const [data, setData] = useState(null);
 
+    const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
+
     useEffect(() => {
+        const domain = Cookies.get("domain");
+
+        if (!domain) {
+            // ➡️ Tidak ada cookie → fallback
+            setData(fallback);
+            return;
+        }
+
         const fetchData = async () => {
-            // 🔹 1️⃣ Cek cookies
-            const domain = Cookies.get("domain");
-
-            // 🔹 2️⃣ Kalau cookies tidak ada → default
-            if (!domain) {
-                setData({
-                    name: "Hamsul Hasan",
-                    whatsapp: "6281911846119",
-                });
-                return;
-            }
-
             try {
-                // 🔹 3️⃣ Ada cookies → panggil API
                 const res = await fetch(`/api/websupport?domain=${domain}`);
                 if (!res.ok) throw new Error("Fetch error");
 
                 const result = await res.json();
-                console.log("🌐 API result:", result);
+                const contact = Array.isArray(result) ? result[0] : result;
 
-                // 🔹 4️⃣ API kirim array / object
-                let contact = null;
-                if (Array.isArray(result) && result.length > 0) {
-                    contact = result[0];
-                } else if (result?.name && result?.whatsapp) {
-                    contact = result;
-                }
-
-                // 🔹 5️⃣ Jika API valid → pakai data
-                if (contact) {
+                if (contact?.name && contact?.whatsapp) {
                     setData(contact);
                 } else {
-                    // 🔹 6️⃣ Jika API aneh → default
-                    setData({
-                        name: "Hamsul Hasan",
-                        whatsapp: "6281911846119",
-                    });
+                    setData(fallback);
                 }
             } catch (err) {
                 console.error("❌ Error fetch:", err);
-                setData({
-                    name: "Hamsul Hasan",
-                    whatsapp: "6281911846119",
-                });
+                setData(fallback);
             }
         };
 
@@ -62,11 +43,7 @@ export default function KontakSection() {
     }, []);
 
     return (
-        <section
-            className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 pt-35 bg-emerald-400"
-            id="kontak"
-        >
-            {/* Structured Data JSON-LD */}
+        <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
             {data && (
                 <Script
                     id="ld-json-kontak"
@@ -84,7 +61,6 @@ export default function KontakSection() {
                 />
             )}
 
-            {/* H1 Utama */}
             <motion.h1
                 initial={{ opacity: 0, y: -30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -110,27 +86,20 @@ export default function KontakSection() {
 
                 {data ? (
                     <>
-                        {/* Avatar Kontak */}
                         <div className="flex flex-col items-center mb-6">
-                            <div
-                                className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-md"
-                                aria-label="Ikon Telepon"
-                            >
-                                <Phone className="w-10 h-10 text-emerald-500" aria-hidden="true" />
+                            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-md">
+                                <Phone className="w-10 h-10 text-emerald-500" />
                             </div>
                             <p className="mt-4 font-semibold">{data.name}</p>
                             <p className="text-sm text-gray-300">{data.whatsapp}</p>
                         </div>
 
-                        {/* Tombol WhatsApp */}
                         <motion.a
                             href={`https://wa.me/${data.whatsapp}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label={`Hubungi ${data.name} via WhatsApp`}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            transition={{ type: "spring", stiffness: 300 }}
                             className="block bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg mb-4"
                         >
                             HUBUNGI via WHATSAPP
@@ -140,13 +109,10 @@ export default function KontakSection() {
                     <p>Loading...</p>
                 )}
 
-                {/* Tombol Daftar */}
                 <motion.a
                     href="/daftar"
-                    aria-label="Daftar Sekarang di Bisnis PT BASS"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 300 }}
                     className="block w-full border-2 border-white hover:bg-gray-200 hover:text-gray-800 font-bold py-3 px-4 rounded-xl transition"
                 >
                     DAFTAR SEKARANG
