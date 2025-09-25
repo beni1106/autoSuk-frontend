@@ -1,18 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Phone } from "lucide-react";
 import { motion } from "framer-motion";
+import { Phone } from "lucide-react";
+import Script from "next/script";
+import Cookies from "js-cookie";
 
 export default function KontakPage() {
-    const searchParams = useSearchParams();
-    const domain = searchParams.get("domain");
-
+    const [domain, setDomain] = useState(null);
     const [data, setData] = useState(null);
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
+    // 🔹 Ambil domain dari URL atau cookies
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const d = params.get("domain");
+
+        if (d) {
+            setDomain(d);
+            Cookies.set("domain", d, { expires: 7 });
+        } else {
+            const saved = Cookies.get("domain");
+            setDomain(saved || null);
+        }
+    }, []);
+
+    // 🔹 Fetch data ke API
     useEffect(() => {
         if (!domain) {
             setData(fallback);
@@ -25,8 +39,8 @@ export default function KontakPage() {
                 if (!res.ok) throw new Error("Fetch error");
 
                 const result = await res.json();
-
                 let contact = null;
+
                 if (Array.isArray(result) && result.length > 0) {
                     contact = result[0];
                 } else if (result?.name && result?.whatsapp) {
@@ -45,6 +59,25 @@ export default function KontakPage() {
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
+            {/* Structured Data JSON-LD */}
+            {data && (
+                <Script
+                    id="ld-json-kontak"
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                            "@context": "https://schema.org",
+                            "@type": "Person",
+                            name: data.name,
+                            telephone: data.whatsapp,
+                            url: `https://wa.me/${data.whatsapp}`,
+                            jobTitle: "Mitra BGN - SSBTEAM",
+                        }),
+                    }}
+                />
+            )}
+
+            {/* H1 */}
             <motion.h1
                 initial={{ opacity: 0, y: -30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -56,6 +89,7 @@ export default function KontakPage() {
                 <span className="text-gray-800">BASSPRENEUR</span>
             </motion.h1>
 
+            {/* Card Kontak */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -64,8 +98,7 @@ export default function KontakPage() {
             >
                 <h2 className="text-2xl font-bold mb-4">Butuh Bantuan?</h2>
                 <p className="mb-6 text-gray-200">
-                    Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang
-                    bisnis PT BASS.
+                    Hubungi saya sekarang untuk informasi lebih lanjut tentang peluang bisnis PT BASS.
                 </p>
 
                 {data ? (
