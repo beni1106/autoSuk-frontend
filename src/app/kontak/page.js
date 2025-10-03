@@ -2,8 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
@@ -11,6 +10,14 @@ import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 
 export default function KontakPage() {
+    return (
+        <Suspense fallback={<p>Loading...</p>}>
+            <KontakPageInner />
+        </Suspense>
+    );
+}
+
+function KontakPageInner() {
     const searchParams = useSearchParams();
     const slugFromQuery = searchParams.get("domain"); // ?domain=cahyo
     const [domain, setDomain] = useState(null);
@@ -38,7 +45,10 @@ export default function KontakPage() {
 
     // ✅ Fetch API sesuai domain
     useEffect(() => {
-        if (!domain) { setData(fallback); return; }
+        if (!domain) {
+            setData(fallback);
+            return;
+        }
 
         (async () => {
             try {
