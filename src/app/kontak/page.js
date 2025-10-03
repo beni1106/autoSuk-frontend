@@ -4,66 +4,54 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
+import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 
 export default function KontakPage() {
+    const searchParams = useSearchParams();
+    const slugFromQuery = searchParams.get("domain"); // ?domain=cahyo
     const [domain, setDomain] = useState(null);
     const [data, setData] = useState(null);
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
-    // 🔹 Ambil domain dari URL atau cookies
+    // ✅ Tentukan domain (query param > cookie > fallback)
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const d = params.get("domain");
-
-        if (d) {
-            setDomain(d);
-            // ✅ cookie diset agar bisa lintas iframe
-            Cookies.set("domain", d, {
+        if (slugFromQuery) {
+            setDomain(slugFromQuery);
+            Cookies.set("domain", slugFromQuery, {
                 expires: 7,
                 sameSite: "None",
                 secure: true,
             });
-        } else {
-            const saved = Cookies.get("domain");
-            setDomain(saved || null);
-        }
-    }, []);
-
-    // 🔹 Fetch data ke API
-    useEffect(() => {
-        if (!domain) {
-            setData(fallback);
             return;
         }
 
-        const fetchData = async () => {
+        const cookieDomain = Cookies.get("domain");
+        if (cookieDomain) {
+            setDomain(cookieDomain);
+        }
+    }, [slugFromQuery]);
+
+    // ✅ Fetch API sesuai domain
+    useEffect(() => {
+        if (!domain) { setData(fallback); return; }
+
+        (async () => {
             try {
                 const res = await fetch(`/api/websupport?domain=${domain}`, {
-                    method: "GET",
-                    credentials: "include", // ✅ biar cookie ikut ke server
+                    credentials: "include",
                 });
-
                 if (!res.ok) throw new Error("Fetch error");
 
-                const result = await res.json();
-                let contact = null;
-
-                if (Array.isArray(result) && result.length > 0) {
-                    contact = result[0];
-                } else if (result?.name && result?.whatsapp) {
-                    contact = result;
-                }
-
-                setData(contact || fallback);
+                const json = await res.json();
+                const contact = Array.isArray(json) ? json[0] : json;
+                setData(contact?.name && contact?.whatsapp ? contact : fallback);
             } catch (err) {
-                console.error("❌ Error fetch:", err);
+                console.error("❌ Fetch error:", err);
                 setData(fallback);
             }
-        };
-
-        fetchData();
+        })();
     }, [domain]);
 
     return (
