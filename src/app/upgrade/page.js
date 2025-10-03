@@ -1,4 +1,8 @@
 "use client";
+
+export const dynamic = "force-dynamic";
+
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -167,7 +171,7 @@ export default function UpgradePage() {
                         </div>
                     </div>
                 </section>
-                <KontakSection />
+                <KontakPage />
             </main>
         </>
     );
