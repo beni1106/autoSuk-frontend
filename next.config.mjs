@@ -6,6 +6,10 @@ const nextConfig = {
         source: "/kontak/:slug",
         destination: "/kontak?domain=:slug", // /kontak/cahyo -> /kontak?domain=cahyo
       },
+      {
+        source: "/:domain",
+        destination: "/?domain=:domain",
+      },
     ];
   },
   async headers() {

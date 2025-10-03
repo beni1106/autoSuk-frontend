@@ -4,7 +4,7 @@ import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import ProdukSection from "../produk/page";
 
-export default function Hero() {
+export default function Hero({ domain }) {
     return (
         <main className="w-full">
 
@@ -16,6 +16,9 @@ export default function Hero() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
                 >
+                    <h1>
+                        Selamat datang {domain ? domain.toUpperCase() : "di AutoSukses2u"}
+                    </h1>
                     <h1>
                         Peluang Bisnis 2025
                         <br />
