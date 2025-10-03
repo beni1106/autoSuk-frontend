@@ -8,7 +8,7 @@ import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import Head from "next/head";
 import { PhoneCall } from "lucide-react";
-import KontakSection from "../kontak/page";
+import KontakPage from "../kontak/page";
 
 export default function UpgradePage() {
     // Nomor WhatsApp tujuan (format internasional tanpa +)
