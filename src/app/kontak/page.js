@@ -29,17 +29,15 @@ function KontakPageInner() {
     useEffect(() => {
         if (slugFromQuery) {
             setDomain(slugFromQuery);
-            Cookies.set("domain", slugFromQuery, {
-                expires: 7,
-                sameSite: "None",
-                secure: true,
-            });
+            localStorage.setItem("domain", slugFromQuery); // ✅ Simpan di localStorage
             return;
         }
 
-        const cookieDomain = Cookies.get("domain");
-        if (cookieDomain) {
-            setDomain(cookieDomain);
+        const savedDomain = localStorage.getItem("domain");
+        if (savedDomain) {
+            setDomain(savedDomain);
+        } else {
+            setDomain("defaultDomain.com");
         }
     }, [slugFromQuery]);
 
