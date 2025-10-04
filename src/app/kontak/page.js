@@ -8,7 +8,6 @@ import { Phone } from "lucide-react";
 import Script from "next/script";
 import { useSearchParams } from "next/navigation";
 
-
 export default function KontakPage() {
     return (
         <Suspense fallback={<p>Loading...</p>}>
@@ -25,15 +24,30 @@ function KontakPageInner() {
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
 
+    // ✅ Helper untuk set cookie cross-domain
+    const setCookie = (name, value, days = 7) => {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+        // SameSite=None; Secure supaya bisa diakses di iframe cross-domain
+        document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=None;Secure`;
+    };
+
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    };
+
     // ✅ Tentukan domain (query param > cookie > fallback)
     useEffect(() => {
         if (slugFromQuery) {
             setDomain(slugFromQuery);
-            localStorage.setItem("domain", slugFromQuery); // ✅ Simpan di localStorage
+            setCookie("domain", slugFromQuery, 7);
             return;
         }
 
-        const savedDomain = localStorage.getItem("domain");
+        const savedDomain = getCookie("domain");
         if (savedDomain) {
             setDomain(savedDomain);
         } else {
@@ -52,7 +66,7 @@ function KontakPageInner() {
             try {
                 const res = await fetch(`/api/websupport?domain=${domain}`, {
                     method: "GET",
-                    credentials: "include", // 🔥 WAJIB untuk cookie cross-domain
+                    credentials: "include", // WAJIB untuk cookie cross-domain
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -71,7 +85,6 @@ function KontakPageInner() {
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-emerald-400">
-            {/* Structured Data JSON-LD */}
             {data && (
                 <Script
                     id="ld-json-kontak"
@@ -89,7 +102,6 @@ function KontakPageInner() {
                 />
             )}
 
-            {/* H1 */}
             <motion.h1
                 initial={{ opacity: 0, y: -30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -101,7 +113,6 @@ function KontakPageInner() {
                 <span className="text-gray-800">BASSPRENEUR</span>
             </motion.h1>
 
-            {/* Card Kontak */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
