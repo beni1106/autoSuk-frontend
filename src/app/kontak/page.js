@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 
 export default function KontakPage() {
     return (
@@ -16,58 +16,61 @@ export default function KontakPage() {
 
 function KontakPageInner() {
     const searchParams = useSearchParams();
-    const slugFromQuery = searchParams.get("domain");
+    const pathname = usePathname();
+
     const [domain, setDomain] = useState(null);
     const [data, setData] = useState(null);
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
-    const isProd = process.env.NODE_ENV === "production";
 
-    // ✅ Helper set cookie cross-domain
-    const setCookie = (name, value, days = 7) => {
-        const expires = new Date();
-        expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-        document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=${isProd ? "None" : "Lax"
-            };${isProd ? "Secure" : ""}`;
-    };
-
-    const getCookie = (name) => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(";").shift();
-        return null;
-    };
-
-    // ✅ Tentukan domain (query param > cookie > fallback)
+    // ✅ Tentukan domain: query param > path slug > cookie > localStorage > fallback
     useEffect(() => {
-        if (slugFromQuery) {
-            setDomain(slugFromQuery);
-            setCookie("domain", slugFromQuery, 7);
-            return;
+        const queryDomain = searchParams.get("domain");
+        const pathSlug = pathname.split("/")[2]; // misal /kontak/cahyo
+
+        let resolvedDomain = queryDomain || pathSlug || null;
+
+        if (!resolvedDomain) {
+            // cek cookie
+            const cookieDomain = document.cookie
+                .split("; ")
+                .find((row) => row.startsWith("domain="))
+                ?.split("=")[1];
+
+            resolvedDomain = cookieDomain || localStorage.getItem("domain") || "defaultDomain.com";
         }
 
-        const savedDomain = getCookie("domain");
-        if (savedDomain) setDomain(savedDomain);
-        else setDomain("defaultDomain.com");
-    }, [slugFromQuery]);
+        console.log("🔍 Query param:", queryDomain);
+        console.log("🛣 Path slug:", pathSlug);
+        console.log("🍪 Cookie/LocalStorage domain:", resolvedDomain);
+
+        setDomain(resolvedDomain);
+
+        // simpan ke cookie & localStorage
+        localStorage.setItem("domain", resolvedDomain);
+        document.cookie = `domain=${resolvedDomain}; path=/`;
+    }, [searchParams, pathname]);
 
     // ✅ Fetch API sesuai domain
     useEffect(() => {
-        if (!domain) {
-            setData(fallback);
-            return;
-        }
+        if (!domain) return;
 
         (async () => {
             try {
+                console.log("🌍 Fetch API dengan domain:", domain);
+
                 const res = await fetch(`/api/websupport?domain=${domain}`, {
                     method: "GET",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
+                    credentials: "include", // cookie ikut dikirim
                 });
+
+                console.log("📡 Status response:", res.status);
+
                 if (!res.ok) throw new Error("Fetch error");
 
                 const json = await res.json();
+                console.log("📨 Data API:", json);
+
                 const contact = Array.isArray(json) ? json[0] : json;
                 setData(contact?.name && contact?.whatsapp ? contact : fallback);
             } catch (err) {

@@ -1,10 +1,29 @@
 "use client";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import ProdukSection from "../produk/page";
 
-export default function Hero({ domain }) {
+export default function Hero() {
+    const [domain, setDomain] = useState("default");
+
+    useEffect(() => {
+        // Ambil dari query param ?domain=
+        const params = new URLSearchParams(window.location.search);
+        const fromUrl = params.get("domain");
+
+        if (fromUrl) {
+            setDomain(fromUrl);
+            document.cookie = `domain=${fromUrl}; path=/; SameSite=None; Secure`;
+        } else {
+            // fallback: coba ambil dari cookie
+            const match = document.cookie.match(/(?:^|;\s*)domain=([^;]+)/);
+            if (match) {
+                setDomain(match[1]);
+            }
+        }
+    }, []);
     return (
         <main className="w-full">
 
