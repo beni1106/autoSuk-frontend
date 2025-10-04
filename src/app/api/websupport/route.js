@@ -45,10 +45,12 @@ export async function GET(req) {
 
         const response = NextResponse.json(data, { headers: corsHeaders() });
 
+        // ✅ Set cookie, beda localhost & production
+        const isProd = process.env.NODE_ENV === "production";
         response.cookies.set("domain", domain, {
             httpOnly: false,
-            secure: true,
-            sameSite: "none",
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
             path: "/",
             maxAge: 60 * 60,
         });
@@ -64,8 +66,13 @@ export async function OPTIONS() {
 }
 
 function corsHeaders(isPreflight = false) {
+    const origin =
+        process.env.NODE_ENV === "production"
+            ? "https://basspreneur.com"
+            : "http://localhost:3000";
+
     return {
-        "Access-Control-Allow-Origin": "https://basspreneur.com",
+        "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Credentials": "true",
         "Access-Control-Expose-Headers": "Set-Cookie",
         ...(isPreflight && {

@@ -1,8 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
@@ -18,24 +16,25 @@ export default function KontakPage() {
 
 function KontakPageInner() {
     const searchParams = useSearchParams();
-    const slugFromQuery = searchParams.get("domain"); // ?domain=cahyo
+    const slugFromQuery = searchParams.get("domain");
     const [domain, setDomain] = useState(null);
     const [data, setData] = useState(null);
 
     const fallback = { name: "Hamsul Hasan", whatsapp: "6281911846119" };
+    const isProd = process.env.NODE_ENV === "production";
 
-    // ✅ Helper untuk set cookie cross-domain
+    // ✅ Helper set cookie cross-domain
     const setCookie = (name, value, days = 7) => {
         const expires = new Date();
         expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-        // SameSite=None; Secure supaya bisa diakses di iframe cross-domain
-        document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=None;Secure`;
+        document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=${isProd ? "None" : "Lax"
+            };${isProd ? "Secure" : ""}`;
     };
 
     const getCookie = (name) => {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+        if (parts.length === 2) return parts.pop().split(";").shift();
         return null;
     };
 
@@ -48,11 +47,8 @@ function KontakPageInner() {
         }
 
         const savedDomain = getCookie("domain");
-        if (savedDomain) {
-            setDomain(savedDomain);
-        } else {
-            setDomain("defaultDomain.com");
-        }
+        if (savedDomain) setDomain(savedDomain);
+        else setDomain("defaultDomain.com");
     }, [slugFromQuery]);
 
     // ✅ Fetch API sesuai domain
@@ -66,10 +62,8 @@ function KontakPageInner() {
             try {
                 const res = await fetch(`/api/websupport?domain=${domain}`, {
                     method: "GET",
-                    credentials: "include", // WAJIB untuk cookie cross-domain
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
                 });
                 if (!res.ok) throw new Error("Fetch error");
 
