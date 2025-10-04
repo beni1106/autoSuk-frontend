@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-// ✅ API untuk ambil kontak + set cookie cross-domain
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const domain = searchParams.get("domain");
@@ -29,21 +28,29 @@ export async function GET(req) {
         }
 
         let data = fallback;
-        if (Array.isArray(parsed) && parsed[0]?.name && parsed[0]?.whatsapp && (parsed[0].error === false || parsed[0].error === "false")) {
+        if (
+            Array.isArray(parsed) &&
+            parsed[0]?.name &&
+            parsed[0]?.whatsapp &&
+            (parsed[0].error === false || parsed[0].error === "false")
+        ) {
             data = { name: parsed[0].name, whatsapp: parsed[0].whatsapp };
-        } else if (parsed?.name && parsed?.whatsapp && (parsed.error === false || parsed.error === "false")) {
+        } else if (
+            parsed?.name &&
+            parsed?.whatsapp &&
+            (parsed.error === false || parsed.error === "false")
+        ) {
             data = { name: parsed.name, whatsapp: parsed.whatsapp };
         }
 
         const response = NextResponse.json(data, { headers: corsHeaders() });
 
-        // ✅ Cookie untuk iframe (dibaca js-cookie di client)
         response.cookies.set("domain", domain, {
             httpOnly: false,
             secure: true,
             sameSite: "none",
             path: "/",
-            maxAge: 60 * 60, // 1 jam
+            maxAge: 60 * 60,
         });
 
         return response;
@@ -52,16 +59,15 @@ export async function GET(req) {
     }
 }
 
-// ✅ Preflight untuk OPTIONS
 export async function OPTIONS() {
     return NextResponse.json({}, { headers: corsHeaders(true) });
 }
 
-// Helper CORS
 function corsHeaders(isPreflight = false) {
     return {
         "Access-Control-Allow-Origin": "https://basspreneur.com",
         "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Expose-Headers": "Set-Cookie",
         ...(isPreflight && {
             "Access-Control-Allow-Methods": "GET,OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",

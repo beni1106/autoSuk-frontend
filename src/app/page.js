@@ -7,5 +7,5 @@ export default function Home({ searchParams }) {
 
   console.log("Domain dari rewrite:", domain);
 
-  return <Hero domain={domain} />;
+  return <Hero />;
 }
