@@ -53,7 +53,11 @@ function KontakPageInner() {
         (async () => {
             try {
                 const res = await fetch(`/api/websupport?domain=${domain}`, {
-                    credentials: "include",
+                    method: "GET",
+                    credentials: "include", // 🔥 WAJIB untuk cookie cross-domain
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                 });
                 if (!res.ok) throw new Error("Fetch error");
 
