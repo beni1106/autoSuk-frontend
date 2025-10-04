@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import Script from "next/script";
 import { useSearchParams } from "next/navigation";
-import Cookies from "js-cookie";
+
 
 export default function KontakPage() {
     return (
